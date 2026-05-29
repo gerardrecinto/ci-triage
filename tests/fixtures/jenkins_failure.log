@@ -1,0 +1,22 @@
+2024-05-28T03:10:00.000Z [Pipeline] Start of Pipeline
+2024-05-28T03:10:01.000Z [Pipeline] node
+2024-05-28T03:10:02.000Z [Pipeline] stage: Checkout
+2024-05-28T03:10:03.000Z Running: git checkout main
+2024-05-28T03:10:05.000Z [Pipeline] stage: Build
+2024-05-28T03:10:06.000Z Running: mvn -B package --no-transfer-progress
+2024-05-28T03:10:08.000Z [INFO] Scanning for projects...
+2024-05-28T03:10:09.000Z [INFO] BUILD
+2024-05-28T03:10:10.000Z [INFO] Compiling 47 source files to /workspace/target/classes
+2024-05-28T03:11:30.000Z [ERROR] /workspace/src/main/java/com/example/cicd/PipelineOrchestrator.java:237: error: cannot find symbol
+2024-05-28T03:11:30.001Z [ERROR]     ArtifactRegistry registry = new ArtifactRegistry(config.getStoragePath());
+2024-05-28T03:11:30.002Z [ERROR]                                     ^
+2024-05-28T03:11:30.003Z [ERROR]   symbol:   class ArtifactRegistry
+2024-05-28T03:11:30.004Z [ERROR]   location: class PipelineOrchestrator
+2024-05-28T03:11:30.005Z [ERROR] /workspace/src/main/java/com/example/cicd/PipelineOrchestrator.java:241: error: method getStorageQuota() is undefined for the type StorageConfig
+2024-05-28T03:11:30.006Z [ERROR] 2 errors
+2024-05-28T03:11:31.000Z [INFO] ------------------------------------------------------------------------
+2024-05-28T03:11:31.001Z [INFO] BUILD FAILURE
+2024-05-28T03:11:31.002Z [INFO] ------------------------------------------------------------------------
+2024-05-28T03:11:31.003Z [INFO] Total time: 1:30 min
+2024-05-28T03:11:31.004Z [INFO] Finished at: 2024-05-28T03:11:31Z
+2024-05-28T03:11:31.005Z [ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile

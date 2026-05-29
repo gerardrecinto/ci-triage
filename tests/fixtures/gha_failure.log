@@ -1,0 +1,26 @@
+2024-05-28T03:20:00.0000000Z ##[group]Run pytest tests/ -x --tb=short
+2024-05-28T03:20:01.0000000Z pytest tests/ -x --tb=short
+2024-05-28T03:20:02.0000000Z ============================= test session starts ==============================
+2024-05-28T03:20:02.0000000Z platform linux -- Python 3.11.9, pytest-7.4.0
+2024-05-28T03:20:02.0000000Z collected 183 items
+2024-05-28T03:20:03.0000000Z
+2024-05-28T03:20:04.0000000Z tests/test_dag.py ....................                                      [ 11%]
+2024-05-28T03:20:05.0000000Z tests/test_scheduler.py .................                                  [ 20%]
+2024-05-28T03:20:06.0000000Z tests/test_artifact_cache.py ............                                  [ 26%]
+2024-05-28T03:20:07.0000000Z tests/test_classifiers.py F
+2024-05-28T03:20:07.1000000Z
+2024-05-28T03:20:07.2000000Z =================================== FAILURES ===================================
+2024-05-28T03:20:07.3000000Z _____________________________ test_rule_flaky_signal ____________________________
+2024-05-28T03:20:07.4000000Z
+2024-05-28T03:20:07.5000000Z     def test_rule_flaky_signal():
+2024-05-28T03:20:07.6000000Z         clf = RuleBasedClassifier()
+2024-05-28T03:20:07.7000000Z >       result = clf.classify([LogEntry(1, None, None, "flaky test intermittent retry", "")])
+2024-05-28T03:20:07.8000000Z         assert result.category == FailureCategory.FLAKY_TEST
+2024-05-28T03:20:07.9000000Z AssertionError: assert UNKNOWN == FLAKY_TEST
+2024-05-28T03:20:08.0000000Z
+2024-05-28T03:20:08.1000000Z FAILED tests/test_classifiers.py::test_rule_flaky_signal - AssertionError: assert UNKNOWN == FLAKY_TEST
+2024-05-28T03:20:08.2000000Z
+2024-05-28T03:20:08.3000000Z =========================== short test summary info ============================
+2024-05-28T03:20:08.4000000Z FAILED tests/test_classifiers.py::test_rule_flaky_signal
+2024-05-28T03:20:08.5000000Z ##[endgroup]
+2024-05-28T03:20:08.6000000Z ##[error]Process completed with exit code 1

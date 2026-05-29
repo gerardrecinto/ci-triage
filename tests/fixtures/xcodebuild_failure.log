@@ -1,0 +1,33 @@
+Build settings from command line:
+    ARCHS = arm64
+    ONLY_ACTIVE_ARCH = NO
+    SDKROOT = iphoneos17.4
+
+=== BUILD TARGET MediaPipelineTests OF PROJECT CoreMediaCI CONFIGURATION Debug ===
+
+Check dependencies
+CompileSwiftSources normal arm64 com.apple.xcode.tools.swift.compiler
+
+/Users/runner/work/CoreMediaCI/Sources/MediaDecoder.swift:142:17: error: use of unresolved identifier 'AVAssetTrackSegment'
+        let segment = AVAssetTrackSegment(timeRange: range)
+                      ^~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/CoreMediaCI/Sources/MediaDecoder.swift:156:9: error: cannot convert value of type 'CMTime' to specified type 'Double'
+        let duration: Double = asset.duration
+                               ^~~~~~~~~~~~~
+/Users/runner/work/CoreMediaCI/Sources/AudioBufferProcessor.swift:89:22: error: value of type 'AVAudioFormat' has no member 'channelCapacity'
+        let capacity = format.channelCapacity
+                              ^~~~~~~~~~~~~~~
+
+CompileSwiftSources failed with a nonzero exit code
+
+Test Suite 'MediaPipelineTests' started at 2024-05-28 03:30:00.000
+Test Case '-[MediaPipelineTests testAudioDecoderBitIdentical]' started.
+Test Case '-[MediaPipelineTests testAudioDecoderBitIdentical]' failed (2.341 seconds).
+Test Case '-[MediaPipelineTests testVideoFrameTimestampAccuracy]' started.
+Test Case '-[MediaPipelineTests testVideoFrameTimestampAccuracy]' passed (0.012 seconds).
+Test Suite 'MediaPipelineTests' finished at 2024-05-28 03:30:02.367.
+     Executed 2 tests, with 1 failure (0 unexpected) in 2.353 seconds.
+
+** BUILD FAILED **
+
+** TEST FAILED **
