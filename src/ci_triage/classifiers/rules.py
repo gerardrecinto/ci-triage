@@ -144,7 +144,7 @@ _RULES: list[_Rule] = [
         re.compile(r"(Could not resolve|dependency.*not found|artifact.*missing)", re.I),
         FailureCategory.DEPENDENCY_FAILURE, 0.82,
         "Artifact or dependency resolution failed",
-        "Verify the artifact is published in Artifactory/Maven Central and the build has access.",
+        "Verify the artifact is published in the artifact repository or Maven Central and the build has access.",
     ),
     # Timeout
     _Rule(
