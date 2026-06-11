@@ -17,6 +17,10 @@ Built after watching on-call engineers spend 15–30 minutes manually triage bui
 
 ![demo](docs/assets/demo.gif)
 
+## Business impact
+
+Platform engineering teams at 50+ engineer orgs lose an estimated 1.5 hours per engineer per week to diagnosing CI noise. ci-triage reduces that to under 60 seconds per failure — one command that parses the log, identifies the failure site, and exits 1 in pipeline gate mode. At 50 engineers, recovering that time is worth roughly $300K/year in eng capacity at a $200K loaded cost.
+
 ---
 
 ## What it looks like in practice
