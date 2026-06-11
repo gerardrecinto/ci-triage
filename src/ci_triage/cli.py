@@ -78,6 +78,10 @@ Examples:
         "--llm-threshold", type=float, default=0.60,
         help="Confidence threshold below which LLM fallback is triggered (default: 0.60)",
     )
+    analyze.add_argument(
+        "--exit-code", action="store_true",
+        help="Exit 1 when a CI failure is detected (useful for blocking pipelines)",
+    )
 
     # flaky
     flaky = sub.add_parser("flaky", help="Show top flaky tests from the tracker")
@@ -161,6 +165,8 @@ def cmd_analyze(args: argparse.Namespace) -> int:
     else:
         TerminalReporter().report(report)
 
+    if args.exit_code and result.failure_sites:
+        return 1
     return 0
 
 
