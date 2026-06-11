@@ -1,5 +1,12 @@
 # ci-triage
 
+![CI](https://github.com/gerardrecinto/ci-triage/actions/workflows/ci.yml/badge.svg)
+![Release](https://github.com/gerardrecinto/ci-triage/actions/workflows/release.yml/badge.svg)
+![Python](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python&logoColor=white)
+![Tests](https://img.shields.io/badge/Tests-28%20passed-brightgreen)
+![License](https://img.shields.io/badge/License-MIT-lightgrey)
+![Claude](https://img.shields.io/badge/Claude-Sonnet_4.6-orange?logo=anthropic&logoColor=white)
+
 ![ci-triage logo](docs/assets/logo.svg)
 
 > From "build failed" to root cause + fix in under a second.
@@ -7,11 +14,6 @@
 AI-powered CI failure analysis for Jenkins, GitHub Actions, and xcodebuild. Rule-based classification first — fast and free. Claude fallback for ambiguous failures. SQLite-backed flaky test tracker with 90-day recurrence scoring.
 
 Built after watching on-call engineers spend 15–30 minutes manually triage build failures: SSH to Jenkins, scroll thousands of log lines, open a second tab for Jira, post a Slack update. The full context-switch before any actual fix.
-
-![Python](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python&logoColor=white)
-![Tests](https://img.shields.io/badge/Tests-28%20passed-brightgreen)
-![License](https://img.shields.io/badge/License-MIT-lightgrey)
-![Claude](https://img.shields.io/badge/Claude-Sonnet_4.6-orange?logo=anthropic&logoColor=white)
 
 ![demo](docs/assets/demo.gif)
 
@@ -184,6 +186,13 @@ pip install -e ".[llm]"
 pip install -e ".[dev]"
 ```
 
+### Docker
+
+```bash
+docker pull ghcr.io/gerardrecinto/ci-triage:latest
+docker run --rm ghcr.io/gerardrecinto/ci-triage:latest analyze build.log --source jenkins
+```
+
 ---
 
 ## Usage
@@ -214,6 +223,21 @@ ci-triage analyze build.log --source jenkins \
 
 # Show top flaky tests (90-day window)
 ci-triage flaky --n 20
+
+# Exit with code 1 on failure — use in CI pipelines to gate merges
+ci-triage analyze build.log --source jenkins --exit-code
+```
+
+### Pipeline gating with `--exit-code`
+
+`--exit-code` makes ci-triage return exit code 1 when a failure is detected. Drop it into any pipeline step to block merges or deployments on unresolved build failures:
+
+```bash
+# GitHub Actions
+- run: ci-triage analyze build.log --source github --exit-code
+
+# Jenkins post-build
+ci-triage analyze ${BUILD_LOG} --source jenkins --exit-code
 ```
 
 ---
