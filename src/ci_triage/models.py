@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum
 from typing import Protocol, runtime_checkable
 
 

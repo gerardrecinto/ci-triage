@@ -74,9 +74,13 @@ class FlakyTestTracker:
         }
 
     def _total_builds_in_window(self, cutoff: str) -> int:
+        # COUNT(DISTINCT build_id) skips NULLs, so events recorded without
+        # --build-id would collapse the denominator to 0 and a single failure
+        # would score 1.0. Count each untagged event as its own build instead.
         with self._connect() as conn:
             row = conn.execute(
-                "SELECT COUNT(DISTINCT build_id) FROM flaky_events WHERE failed_at >= ?",
+                "SELECT COUNT(DISTINCT COALESCE(build_id, 'event:' || id)) "
+                "FROM flaky_events WHERE failed_at >= ?",
                 (cutoff,),
             ).fetchone()
         return row[0] if row else 1

@@ -1,5 +1,4 @@
 from pathlib import Path
-import pytest
 from ci_triage.classifiers import RuleBasedClassifier
 from ci_triage.models import FailureCategory, LogEntry
 from ci_triage.parsers import JenkinsParser, GitHubActionsParser, XcodebuildParser

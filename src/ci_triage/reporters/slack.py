@@ -79,7 +79,7 @@ class SlackReporter:
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": f":warning: *High-recurrence flaky tests:*\n" + "\n".join(high_flaky),
+                        "text": ":warning: *High-recurrence flaky tests:*\n" + "\n".join(high_flaky),
                     },
                 })
 

@@ -1,4 +1,3 @@
-import tempfile
 import pytest
 from ci_triage.tracker import FlakyTestTracker
 
@@ -40,6 +39,15 @@ def test_top_flaky(tracker):
 def test_no_flaky_history(tracker):
     top = tracker.top_flaky()
     assert top == []
+
+
+def test_single_failure_without_build_id_is_not_flaky(tracker):
+    tracker.record("tests::test_once", None, "jenkins")
+    tracker.record("tests::test_other_a", None, "jenkins")
+    tracker.record("tests::test_other_b", None, "jenkins")
+
+    scores = tracker.scores(["tests::test_once"])
+    assert scores["tests::test_once"] < 0.70
 
 
 def test_score_capped_at_one(tracker):
