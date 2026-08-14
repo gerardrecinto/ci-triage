@@ -11,7 +11,7 @@
 
 > From "build failed" to root cause + fix in under a second.
 
-AI-powered CI failure analysis for Jenkins, GitHub Actions, and xcodebuild. Rule-based classification first — fast and free. Claude fallback for ambiguous failures. SQLite-backed flaky test tracker with 90-day recurrence scoring.
+AI-powered CI failure analysis for Jenkins, GitHub Actions, and xcodebuild. Rule-based classification first: fast and free. Claude fallback for ambiguous failures. SQLite-backed flaky test tracker with 90-day recurrence scoring.
 
 Built after watching on-call engineers spend 15–30 minutes manually triage build failures: SSH to Jenkins, scroll thousands of log lines, open a second tab for Jira, post a Slack update. The full context-switch before any actual fix.
 
@@ -19,7 +19,7 @@ Built after watching on-call engineers spend 15–30 minutes manually triage bui
 
 ## Business impact
 
-Platform engineering teams at 50+ engineer orgs lose an estimated 1.5 hours per engineer per week to diagnosing CI noise. ci-triage reduces that to under 60 seconds per failure — one command that parses the log, identifies the failure site, and exits 1 in pipeline gate mode. At 50 engineers, recovering that time is worth roughly $300K/year in eng capacity at a $200K loaded cost.
+Platform engineering teams at 50+ engineer orgs lose an estimated 1.5 hours per engineer per week to diagnosing CI noise. ci-triage reduces that to under 60 seconds per failure: one command that parses the log, identifies the failure site, and exits 1 in pipeline gate mode. At 50 engineers, recovering that time is worth roughly $300K/year in eng capacity at a $200K loaded cost.
 
 ---
 
@@ -41,7 +41,7 @@ $ ci-triage analyze xcbuild.log --source xcodebuild --build-id ios27-5512
   ██████████████████░░ 90%
 
   ROOT CAUSE
-  Swift/ObjC compilation failed — unresolved symbol or type error
+  Swift/ObjC compilation failed: unresolved symbol or type error
 
   SUGGESTED FIX
   Check import statements and ensure the symbol is accessible
@@ -59,7 +59,7 @@ $ ci-triage analyze xcbuild.log --source xcodebuild --build-id ios27-5512
 ────────────────────────────────────────────────────────────
 ```
 
-Same command, same log, but add `--llm` when confidence is below threshold — Claude adds nuanced root cause and platform-specific fix context.
+Same command, same log, but add `--llm` when confidence is below threshold: Claude adds nuanced root cause and platform-specific fix context.
 
 ---
 
@@ -142,38 +142,38 @@ $ ci-triage flaky
 Rather than a feature checklist, here is how each concept appears in the actual code:
 
 **Protocol / `@runtime_checkable`**
-- `LogParser` — structural Protocol; `JenkinsParser`, `GitHubActionsParser`, `XcodebuildParser` satisfy it without inheriting
-- `FailureClassifier` — Protocol; both `RuleBasedClassifier` and `LLMClassifier` satisfy it
-- `Reporter` — Protocol used in `cli.py` for `isinstance` check on output format selection
+- `LogParser`: structural Protocol; `JenkinsParser`, `GitHubActionsParser`, `XcodebuildParser` satisfy it without inheriting
+- `FailureClassifier`: Protocol; both `RuleBasedClassifier` and `LLMClassifier` satisfy it
+- `Reporter`: Protocol used in `cli.py` for `isinstance` check on output format selection
 
 **`@dataclass(slots=True, frozen=True)`**
-- `LogEntry` — immutable, `__hash__` automatic, no `__dict__` overhead — safe in sets, 475+ pipeline worth of log entries
-- `FailureSite` — frozen record; `context_lines: tuple[str, ...]` instead of list because tuples are hashable
-- `_Rule` — internal rule definition; frozen prevents accidental mutation of rule weights at runtime
+- `LogEntry`: immutable, `__hash__` automatic, no `__dict__` overhead: safe in sets, 475+ pipeline worth of log entries
+- `FailureSite`: frozen record; `context_lines: tuple[str, ...]` instead of list because tuples are hashable
+- `_Rule`: internal rule definition; frozen prevents accidental mutation of rule weights at runtime
 
 **`@dataclass(slots=True)` (mutable)**
-- `ClassificationResult` — mutable: `failure_sites` populated post-classify by parser
-- `TriageReport` — mutable: `flaky_test_scores` filled after SQLite lookup
+- `ClassificationResult`: mutable: `failure_sites` populated post-classify by parser
+- `TriageReport`: mutable: `flaky_test_scores` filled after SQLite lookup
 
-**Pattern matching (`match`/`case` — Python 3.10+)**
-- `cli.py:main()` — dispatches on `args.command` (`"analyze"` / `"flaky"`)
+**Pattern matching (`match`/`case`: Python 3.10+)**
+- `cli.py:main()`: dispatches on `args.command` (`"analyze"` / `"flaky"`)
 - Replaces an if/elif chain; explicit exhaustiveness via `case _` fallback
 
 **`@contextlib.contextmanager`**
-- `FlakyTestTracker._connect()` — context manager wrapping SQLite connection; guarantees `conn.close()` even on exception; used with WAL mode for concurrent write safety
+- `FlakyTestTracker._connect()`: context manager wrapping SQLite connection; guarantees `conn.close()` even on exception; used with WAL mode for concurrent write safety
 
 **Generators (implicit, via list comprehensions)**
-- `JenkinsParser.extract_failure_sites()` — generator expression over entries for O(n) single-pass extraction
-- `TerminalReporter.report()` — sorted + islice for lazy top-N flaky scores
+- `JenkinsParser.extract_failure_sites()`: generator expression over entries for O(n) single-pass extraction
+- `TerminalReporter.report()`: sorted + islice for lazy top-N flaky scores
 
 **`__slots__`**
-- All `@dataclass(slots=True)` classes: no `__dict__`, fixed memory layout — relevant when processing hundreds of log entries per build
+- All `@dataclass(slots=True)` classes: no `__dict__`, fixed memory layout: relevant when processing hundreds of log entries per build
 
 **`ABC` via Protocol**
-- `LogParser`, `FailureClassifier`, `Reporter` — Protocols enforce structural contracts without inheritance; checked with `isinstance` at runtime via `@runtime_checkable`
+- `LogParser`, `FailureClassifier`, `Reporter`: Protocols enforce structural contracts without inheritance; checked with `isinstance` at runtime via `@runtime_checkable`
 
 **Regex compilation at module level**
-- All `_RE` constants in each parser compiled once at import; not recompiled per `parse()` call — avoids per-invocation overhead across 475 pipeline log reads
+- All `_RE` constants in each parser compiled once at import; not recompiled per `parse()` call: avoids per-invocation overhead across 475 pipeline log reads
 
 ---
 
@@ -208,7 +208,7 @@ ci-triage analyze build.log --source jenkins --build-id jenkins-4821
 # Read from stdin (pipe from CI system)
 cat build.log | ci-triage analyze - --source github
 
-# xcodebuild — Apple CI
+# xcodebuild: Apple CI
 ci-triage analyze xcbuild.log --source xcodebuild
 
 # Use Claude when rule confidence < 0.60
@@ -228,7 +228,7 @@ ci-triage analyze build.log --source jenkins \
 # Show top flaky tests (90-day window)
 ci-triage flaky --n 20
 
-# Exit with code 1 on failure — use in CI pipelines to gate merges
+# Exit with code 1 on failure: use in CI pipelines to gate merges
 ci-triage analyze build.log --source jenkins --exit-code
 ```
 
