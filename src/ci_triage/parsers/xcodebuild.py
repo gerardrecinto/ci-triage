@@ -38,6 +38,8 @@ class XcodebuildParser:
                 level = "ERROR" if "FAILED" in line else "INFO"
             elif _XC_ERROR.match(line):
                 level = "ERROR"
+            elif _CODESIGN_ERROR.search(line):
+                level = "ERROR"
             entries.append(LogEntry(
                 line_number=i,
                 timestamp=None,
@@ -84,6 +86,13 @@ class XcodebuildParser:
                 sites.append(FailureSite(
                     file=None, line=None, column=None,
                     test_name=None, error_message=f"linker: {m.group(1)}",
+                ))
+                continue
+            m = _CODESIGN_ERROR.search(entry.message)
+            if m:
+                sites.append(FailureSite(
+                    file=None, line=None, column=None,
+                    test_name=None, error_message=f"codesign: {m.group(1)} failed",
                 ))
         return sites
 

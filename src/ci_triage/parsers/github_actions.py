@@ -14,8 +14,7 @@ _NPM_ERR = re.compile(r"^npm ERR!\s+(.+)")
 _GHA_ERROR_FILE = re.compile(
     r"^::error file=(.+?),line=(\d+)(?:,col=(\d+))?::(.+)$"
 )
-_STEP_FAILED = re.compile(r"^##\[error\]Process completed with exit code (\d+)")
-_RUN_FAILED = re.compile(r"Run (.+) .*\n.*exit code (\d+)", re.MULTILINE)
+_STEP_FAILED = re.compile(r"^Process completed with exit code (\d+)")
 
 
 class GitHubActionsParser:
@@ -79,6 +78,14 @@ class GitHubActionsParser:
                 sites.append(FailureSite(
                     file=None, line=None, column=None,
                     test_name=None, error_message=m.group(1),
+                ))
+                continue
+            m = _STEP_FAILED.match(entry.message)
+            if m:
+                sites.append(FailureSite(
+                    file=None, line=None, column=None,
+                    test_name=None,
+                    error_message=f"step exited with code {m.group(1)}",
                 ))
         return sites
 

@@ -92,3 +92,33 @@ class TestXcodebuildParser:
         test_sites = [s for s in sites if s.test_name]
         assert len(test_sites) >= 1
         assert "testAudioDecoderBitIdentical" in test_sites[0].test_name
+
+    def test_extracts_codesign_failure(self):
+        log = (
+            "=== BUILD TARGET App OF PROJECT App CONFIGURATION Release ===\n"
+            "CodeSign /Users/runner/work/App.app failed\n"
+            "Code Signing Error: No signing certificate found\n"
+            "** BUILD FAILED **\n"
+        )
+        entries = self.parser.parse(log)
+        context = self.parser.extract_failure_context(entries)
+        sites = self.parser.extract_failure_sites(context)
+        assert any("codesign" in s.error_message.lower() for s in sites)
+
+
+class TestGitHubActionsParserStepFailure:
+    def setup_method(self):
+        self.parser = GitHubActionsParser()
+
+    def test_extracts_step_exit_code_when_no_other_signal(self):
+        log = (
+            "##[group]Run ./scripts/deploy.sh\n"
+            "./scripts/deploy.sh\n"
+            "deploy: connecting to staging...\n"
+            "deploy: rollback triggered\n"
+            "##[endgroup]\n"
+            "##[error]Process completed with exit code 1\n"
+        )
+        entries = self.parser.parse(log)
+        sites = self.parser.extract_failure_sites(entries)
+        assert any("exited with code 1" in s.error_message for s in sites)
