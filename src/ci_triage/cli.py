@@ -2,16 +2,17 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import json
 import os
 import sys
 import time
 
 from ci_triage import __version__
-from ci_triage.models import CISource, TriageReport
+from ci_triage.models import CISource, FailureCategory, TriageReport
 from ci_triage.parsers import JenkinsParser, GitHubActionsParser, XcodebuildParser
 from ci_triage.classifiers import RuleBasedClassifier, LLMClassifier
 from ci_triage.reporters import TerminalReporter, SlackReporter, JsonReporter
-from ci_triage.tracker import FlakyTestTracker
+from ci_triage.tracker import FlakyTestTracker, QUARANTINE_THRESHOLD
 
 _SOURCE_MAP = {
     "jenkins": (CISource.JENKINS, JenkinsParser()),
@@ -87,6 +88,14 @@ Examples:
     flaky = sub.add_parser("flaky", help="Show top flaky tests from the tracker")
     flaky.add_argument("--n", type=int, default=20, help="Number of tests to show")
     flaky.add_argument("--db", default="~/.ci-triage/flaky.db")
+    flaky.add_argument(
+        "--output", choices=["terminal", "json"], default="terminal",
+        help="Output format",
+    )
+    flaky.add_argument(
+        "--exit-code", action="store_true",
+        help="Exit 1 if any test is at or above the quarantine threshold (0.70)",
+    )
 
     return p
 
@@ -165,7 +174,7 @@ def cmd_analyze(args: argparse.Namespace) -> int:
     else:
         TerminalReporter().report(report)
 
-    if args.exit_code and result.failure_sites:
+    if args.exit_code and result.category != FailureCategory.UNKNOWN:
         return 1
     return 0
 
@@ -173,16 +182,33 @@ def cmd_analyze(args: argparse.Namespace) -> int:
 def cmd_flaky(args: argparse.Namespace) -> int:
     tracker = FlakyTestTracker(args.db)
     top = tracker.top_flaky(args.n)
-    if not top:
-        print("No flaky test history found.")
-        return 0
-    print(f"\n  Top {len(top)} flaky tests (last 90 days)\n")
-    print(f"  {'Score':>6}  Test")
-    print("  " + "-" * 55)
-    for name, score in top:
-        bar = "█" * round(score * 10) + "░" * (10 - round(score * 10))
-        print(f"  {score:.2f}   {bar}  {name}")
-    print()
+    quarantine = [name for name, score in top if score >= QUARANTINE_THRESHOLD]
+
+    if args.output == "json":
+        payload = {
+            "window_days": 90,
+            "quarantine_threshold": QUARANTINE_THRESHOLD,
+            "tests": [
+                {"test_name": name, "score": round(score, 4), "quarantine_candidate": score >= QUARANTINE_THRESHOLD}
+                for name, score in top
+            ],
+        }
+        print(json.dumps(payload, indent=2))
+    else:
+        if not top:
+            print("No flaky test history found.")
+        else:
+            print(f"\n  Top {len(top)} flaky tests (last 90 days)\n")
+            print(f"  {'Score':>6}  Test")
+            print("  " + "-" * 55)
+            for name, score in top:
+                bar = "█" * round(score * 10) + "░" * (10 - round(score * 10))
+                flag = "  ← quarantine candidate" if score >= QUARANTINE_THRESHOLD else ""
+                print(f"  {score:.2f}   {bar}  {name}{flag}")
+            print()
+
+    if args.exit_code and quarantine:
+        return 1
     return 0
 
 

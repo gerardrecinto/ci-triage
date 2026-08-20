@@ -20,6 +20,7 @@ CREATE INDEX IF NOT EXISTS idx_flaky_time ON flaky_events(failed_at);
 """
 
 _WINDOW_DAYS = 90
+QUARANTINE_THRESHOLD = 0.70
 
 
 class FlakyTestTracker:
