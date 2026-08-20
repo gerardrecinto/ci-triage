@@ -3,7 +3,7 @@
 ![CI](https://github.com/gerardrecinto/ci-triage/actions/workflows/ci.yml/badge.svg)
 ![Release](https://github.com/gerardrecinto/ci-triage/actions/workflows/release.yml/badge.svg)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python&logoColor=white)
-![Tests](https://img.shields.io/badge/Tests-28%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/Tests-40%20passed-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey)
 ![Claude](https://img.shields.io/badge/Claude-Sonnet_4.6-orange?logo=anthropic&logoColor=white)
 
@@ -78,7 +78,7 @@ CI Build Fails
 │  │  Parser  │   │Classifier  │   │ Flaky Tracker     │ │
 │  │          │──▶│            │──▶│                   │ │
 │  │ Jenkins  │   │ Rule-based │   │ SQLite 90-day     │ │
-│  │ GHA      │   │ (22 rules) │   │ recurrence score  │ │
+│  │ GHA      │   │ (21 rules) │   │ recurrence score  │ │
 │  │ xcode    │   │            │   │ score > 0.70 →    │ │
 │  └──────────┘   │ LLM (opt.) │   │ quarantine flag   │ │
 │                 │ Claude API │   └───────────────────┘ │
@@ -119,7 +119,7 @@ CI Build Fails
 
 ## Flaky Test Tracker
 
-Every test failure is recorded in SQLite (`~/.ci-triage/flaky.db`). Recurrence score = failure frequency over the past 90 days. Score above `0.70` → quarantine candidate.
+Every test failure is recorded in SQLite (`~/.ci-triage/flaky.db`). Recurrence score = failure frequency over the past 90 days. Score above `0.70` → quarantine candidate, flagged inline in the CLI output.
 
 ```
 $ ci-triage flaky
@@ -128,11 +128,19 @@ $ ci-triage flaky
 
   Score  Test
   ─────────────────────────────────────────────────────────
-  0.82   ██████████░  tests::test_network_retry
-  0.74   ███████░░░░  tests::test_kafka_consumer_lag
+  0.82   ██████████░  tests::test_network_retry  ← quarantine candidate
+  0.74   ███████░░░░  tests::test_kafka_consumer_lag  ← quarantine candidate
   0.61   ██████░░░░░  tests::test_s3_presigned_url
   0.33   ███░░░░░░░░  tests::test_artifact_cache_hit
   0.11   █░░░░░░░░░░  tests::test_dag_topological_sort
+```
+
+```bash
+# JSON output for dashboards/tooling
+ci-triage flaky --output json
+
+# Gate CI on flaky-test debt: exit 1 if anything crosses the quarantine threshold
+ci-triage flaky --exit-code
 ```
 
 ---
@@ -258,7 +266,7 @@ ci-triage analyze ${BUILD_LOG} --source jenkins --exit-code
 ## Tests
 
 ```bash
-make test        # run all 28 tests
+make test        # run all 40 tests
 make test-cov    # with coverage report
 make demo        # run all three fixtures end-to-end
 ```
