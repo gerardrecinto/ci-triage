@@ -124,15 +124,20 @@ def cmd_analyze(args: argparse.Namespace) -> int:
     rule_clf = RuleBasedClassifier()
     result = rule_clf.classify(context)
 
-    if (
-        (args.llm_always or (args.llm and result.confidence < args.llm_threshold))
-        and os.environ.get("ANTHROPIC_API_KEY")
-    ):
-        try:
-            llm_clf = LLMClassifier()
-            result = llm_clf.classify(context)
-        except Exception as exc:
-            print(f"ci-triage: LLM fallback failed ({exc}), using rule result", file=sys.stderr)
+    should_use_llm = args.llm_always or (args.llm and result.confidence < args.llm_threshold)
+    if should_use_llm:
+        if os.environ.get("ANTHROPIC_API_KEY"):
+            try:
+                llm_clf = LLMClassifier()
+                result = llm_clf.classify(context)
+            except Exception as exc:
+                print(f"ci-triage: LLM fallback failed ({exc}), using rule result", file=sys.stderr)
+        else:
+            print(
+                "ci-triage: --llm requested but ANTHROPIC_API_KEY is missing. "
+                "Please configure your Claude Code API key (export ANTHROPIC_API_KEY=...).",
+                file=sys.stderr,
+            )
 
     # Extract failure sites from parser if classifier has none
     if not result.failure_sites and hasattr(parser, "extract_failure_sites"):

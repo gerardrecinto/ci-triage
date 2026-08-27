@@ -55,6 +55,18 @@ class TestExitCode:
         )
         assert cmd_analyze(args) == 0
 
+    def test_llm_flag_without_api_key_warns(self, tmp_path, monkeypatch, capsys):
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        log = tmp_path / "perm.log"
+        log.write_text("2026-08-20T01:00:00Z [ERROR] Unrecognized custom failure\n")
+        parser = build_parser()
+        args = parser.parse_args(
+            ["analyze", str(log), "--source", "jenkins", "--llm-always", "--db", str(tmp_path / "flaky.db"), "--no-track"]
+        )
+        cmd_analyze(args)
+        err = capsys.readouterr().err
+        assert "ANTHROPIC_API_KEY is missing" in err
+
 
 class TestFlakyCommand:
     def _tracker(self, tmp_path) -> FlakyTestTracker:

@@ -20,11 +20,24 @@ class _Rule:
 
 
 _RULES: list[_Rule] = [
+    # Permission and Authorization failures
+    _Rule(
+        re.compile(r"(ScriptSecurityException|script.*not approved|RejectedAccessException|scripts not permitted)", re.I),
+        FailureCategory.INFRA_FAILURE, 0.90,
+        "Jenkins script security approval required",
+        "Approve the pending script in Jenkins (Manage Jenkins > In-process Script Approval). If pipeline logic is blocked by custom credentials, configure ANTHROPIC_API_KEY and run with --llm.",
+    ),
+    _Rule(
+        re.compile(r"(permission denied|access denied|operation not permitted|EACCES|EPERM|403 Forbidden|401 Unauthorized|HTTP 403|HTTP 401)", re.I),
+        FailureCategory.INFRA_FAILURE, 0.88,
+        "Permission or authentication failure in CI pipeline",
+        "Check user/agent credentials, file permissions, SSH keys, or access tokens. Configure ANTHROPIC_API_KEY (Claude Code API key) and re-run with --llm for AI root cause analysis.",
+    ),
     # Compilation errors
     _Rule(
         re.compile(r"error: .*(cannot find|unresolved identifier|type .* has no member|undeclared identifier)", re.I),
         FailureCategory.COMPILATION_ERROR, 0.9,
-        "Swift/ObjC compilation failed — unresolved symbol or type error",
+        "Swift/ObjC compilation failed: unresolved symbol or type error",
         "Check import statements and ensure the symbol is accessible in the current module/scope.",
     ),
     _Rule(
@@ -48,7 +61,7 @@ _RULES: list[_Rule] = [
     _Rule(
         re.compile(r"ld: .*(library not found|framework not found|symbol.* not found)", re.I),
         FailureCategory.COMPILATION_ERROR, 0.87,
-        "Linker error — missing library or symbol",
+        "Linker error: missing library or symbol",
         "Verify framework search paths and check that all linked libraries are present in the build environment.",
     ),
     # Test failures
@@ -74,13 +87,13 @@ _RULES: list[_Rule] = [
         re.compile(r"AssertionError", re.I),
         FailureCategory.TEST_FAILURE, 0.82,
         "Assertion failed in test",
-        "Check the assertion value vs expected — add pytest -s to see print() output.",
+        "Check assertion value vs expected. Add pytest -s to see print() output.",
     ),
     # Flaky test signals
     _Rule(
         re.compile(r"(flaky|intermittent|timeout.*retry|retry.*attempt)", re.I),
         FailureCategory.FLAKY_TEST, 0.75,
-        "Potential flaky test — retry or intermittent keywords detected",
+        "Potential flaky test: retry or intermittent keywords detected",
         "Track recurrence across builds. If score > 0.7, quarantine and file a flakiness bug.",
     ),
     _Rule(
@@ -93,7 +106,7 @@ _RULES: list[_Rule] = [
     _Rule(
         re.compile(r"(out of memory|OOMKilled|java\.lang\.OutOfMemoryError|MemoryError)", re.I),
         FailureCategory.RESOURCE_EXHAUSTION, 0.92,
-        "OOM — build agent or test process ran out of memory",
+        "OOM: build agent or test process ran out of memory",
         "Increase memory limit for the CI agent, or reduce parallelism (--workers/-n flags).",
     ),
     _Rule(
@@ -112,7 +125,7 @@ _RULES: list[_Rule] = [
     _Rule(
         re.compile(r"(connection refused|ECONNREFUSED|504|502|503|gateway timeout)", re.I),
         FailureCategory.INFRA_FAILURE, 0.82,
-        "Network/gateway failure — upstream dependency unreachable",
+        "Network/gateway failure: upstream dependency unreachable",
         "Check if the target service is healthy. This is likely an infrastructure issue, not a code bug.",
     ),
     _Rule(
@@ -183,7 +196,17 @@ class RuleBasedClassifier:
             fix = primary_rule[0].fix_template
         else:
             summary = "No matching failure pattern found"
-            fix = "Enable verbose logging and re-run to capture more context."
+            fix = "No matching rule found. Configure your ANTHROPIC_API_KEY (Claude Code API key) and re-run with --llm for AI-powered failure triage."
+
+        failure_sites: list[FailureSite] = []
+        return ClassificationResult(
+            category=category,
+            confidence=confidence,
+            failure_sites=failure_sites,
+            summary=summary,
+            suggested_fix=fix,
+            llm_used=False,
+        )
 
         failure_sites: list[FailureSite] = []
         return ClassificationResult(

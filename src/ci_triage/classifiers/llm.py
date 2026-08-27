@@ -9,7 +9,7 @@ from ci_triage.models import (
 )
 
 _SYSTEM_PROMPT = """You are a CI/CD failure triage expert.
-Given a CI build log excerpt, respond with JSON only — no prose:
+Given a CI build log excerpt, respond with JSON only (no prose):
 {
   "category": "<one of: compilation_error | test_failure | flaky_test | resource_exhaustion | infra_failure | dependency_failure | timeout | unknown>",
   "confidence": <float 0.0-1.0>,

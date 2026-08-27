@@ -40,6 +40,19 @@ class TestJenkinsParser:
         assert sites[0].file is not None
         assert "PipelineOrchestrator.java" in sites[0].file
 
+    def test_extracts_permission_failure_sites(self):
+        log = (
+            "2026-08-26T12:00:00Z [INFO] Executing script...\n"
+            "2026-08-26T12:00:01Z org.jenkinsci.plugins.scriptsecurity.sandbox.RejectedAccessException: Scripts not permitted to use method hudson.model.Item getParent\n"
+            "2026-08-26T12:00:02Z chmod: cannot access '/var/jenkins/workspace/test': Permission denied\n"
+        )
+        entries = self.parser.parse(log)
+        context = self.parser.extract_failure_context(entries)
+        sites = self.parser.extract_failure_sites(context)
+        assert len(sites) >= 2
+        assert any("Permission denied" in s.error_message for s in sites)
+        assert any("Scripts not permitted" in s.error_message for s in sites)
+
 
 class TestGitHubActionsParser:
     def setup_method(self):

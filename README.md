@@ -3,7 +3,7 @@
 ![CI](https://github.com/gerardrecinto/ci-triage/actions/workflows/ci.yml/badge.svg)
 ![Release](https://github.com/gerardrecinto/ci-triage/actions/workflows/release.yml/badge.svg)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python&logoColor=white)
-![Tests](https://img.shields.io/badge/Tests-40%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/Tests-44%20passed-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey)
 ![Claude](https://img.shields.io/badge/Claude-Sonnet_4.6-orange?logo=anthropic&logoColor=white)
 
@@ -13,7 +13,7 @@
 
 AI-powered CI failure analysis for Jenkins, GitHub Actions, and xcodebuild. Rule-based classification first: fast and free. Claude fallback for ambiguous failures. SQLite-backed flaky test tracker with 90-day recurrence scoring.
 
-Built after watching on-call engineers spend 15–30 minutes manually triage build failures: SSH to Jenkins, scroll thousands of log lines, open a second tab for Jira, post a Slack update. The full context-switch before any actual fix.
+Built after watching on-call engineers spend 15-30 minutes manually triage build failures: SSH to Jenkins, scroll thousands of log lines, open a second tab for Jira, post a Slack update. The full context-switch before any actual fix.
 
 ![demo](docs/assets/demo.gif)
 
@@ -78,7 +78,7 @@ CI Build Fails
 │  │  Parser  │   │Classifier  │   │ Flaky Tracker     │ │
 │  │          │──▶│            │──▶│                   │ │
 │  │ Jenkins  │   │ Rule-based │   │ SQLite 90-day     │ │
-│  │ GHA      │   │ (21 rules) │   │ recurrence score  │ │
+│  │ GHA      │   │ (23 rules) │   │ recurrence score  │ │
 │  │ xcode    │   │            │   │ score > 0.70 →    │ │
 │  └──────────┘   │ LLM (opt.) │   │ quarantine flag   │ │
 │                 │ Claude API │   └───────────────────┘ │

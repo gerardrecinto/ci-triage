@@ -60,8 +60,8 @@ class SlackReporter:
             })
         if c.failure_sites:
             sites_text = "\n".join(
-                f"• `{s.file}:{s.line}` — {s.error_message}"
-                if s.file else f"• `{s.test_name or 'unknown'}` — {s.error_message}"
+                f"• `{s.file}:{s.line}`: {s.error_message}"
+                if s.file else f"• `{s.test_name or 'unknown'}`: {s.error_message}"
                 for s in c.failure_sites[:5]
             )
             blocks.append({

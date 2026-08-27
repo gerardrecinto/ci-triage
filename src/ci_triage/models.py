@@ -46,7 +46,7 @@ class FailureSite:
 @dataclass(slots=True)
 class ClassificationResult:
     category: FailureCategory
-    confidence: float  # 0.0–1.0
+    confidence: float  # 0.0-1.0
     failure_sites: list[FailureSite]
     summary: str
     suggested_fix: str | None = None
