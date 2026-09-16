@@ -80,7 +80,10 @@ class TerminalReporter:
         self._print()
 
         self._print(_c("cyan", "  CONFIDENCE"))
-        self._print(f"  {_confidence_bar(c.confidence)}")
+        if c.confidence <= 0.0:
+            self._print(f"  {_c('yellow', 'NEEDS REVIEW', bold=True)}  (no rule matched — not a signal that the build is fine)")
+        else:
+            self._print(f"  {_confidence_bar(c.confidence)}")
         self._print()
 
         self._print(_c("cyan", "  ROOT CAUSE"))

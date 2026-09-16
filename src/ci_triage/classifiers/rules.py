@@ -195,18 +195,12 @@ class RuleBasedClassifier:
             summary = primary_rule[0].summary_template
             fix = primary_rule[0].fix_template
         else:
-            summary = "No matching failure pattern found"
+            summary = (
+                f"Scanned {len(entries)} log line(s); no known failure signature matched"
+                if entries
+                else "No log content to analyze (0 lines parsed) — check the file path and --source flag"
+            )
             fix = "No matching rule found. Configure your ANTHROPIC_API_KEY (Claude Code API key) and re-run with --llm for AI-powered failure triage."
-
-        failure_sites: list[FailureSite] = []
-        return ClassificationResult(
-            category=category,
-            confidence=confidence,
-            failure_sites=failure_sites,
-            summary=summary,
-            suggested_fix=fix,
-            llm_used=False,
-        )
 
         failure_sites: list[FailureSite] = []
         return ClassificationResult(

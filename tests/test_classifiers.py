@@ -60,6 +60,14 @@ class TestRuleBasedClassifier:
         assert result.category == FailureCategory.UNKNOWN
         assert result.confidence == 0.0
         assert "ANTHROPIC_API_KEY" in result.suggested_fix
+        assert "0 lines parsed" in result.summary
+
+    def test_unknown_for_unrecognized_content(self):
+        entries = [LogEntry(1, None, "INFO", "Deploying widget to staging cluster", "")]
+        result = self.clf.classify(entries)
+        assert result.category == FailureCategory.UNKNOWN
+        assert result.confidence == 0.0
+        assert "Scanned 1 log line" in result.summary
 
     def test_jenkins_script_security_error(self):
         entries = [LogEntry(1, None, "ERROR", "org.jenkinsci.plugins.scriptsecurity.sandbox.RejectedAccessException: Scripts not permitted to use method", "")]
