@@ -4,6 +4,7 @@ import argparse
 import datetime
 import json
 import os
+import sqlite3
 import sys
 import time
 
@@ -103,6 +104,13 @@ Examples:
 def cmd_analyze(args: argparse.Namespace) -> int:
     # Read log
     if args.log == "-":
+        if sys.stdin.isatty():
+            print(
+                "ci-triage: no log given. Pass a file path or pipe a log in, "
+                "e.g. `ci-triage analyze build.log --source jenkins`.",
+                file=sys.stderr,
+            )
+            return 1
         log_text = sys.stdin.read()
     else:
         try:
@@ -110,6 +118,16 @@ def cmd_analyze(args: argparse.Namespace) -> int:
                 log_text = f.read()
         except FileNotFoundError:
             print(f"ci-triage: file not found: {args.log}", file=sys.stderr)
+            return 1
+        except OSError as exc:
+            print(f"ci-triage: cannot read {args.log}: {exc.strerror or exc}", file=sys.stderr)
+            return 1
+
+    slack_url = None
+    if args.output == "slack":
+        slack_url = args.slack_webhook or os.environ.get("CI_TRIAGE_SLACK_WEBHOOK")
+        if not slack_url:
+            print("ci-triage: --slack-webhook or CI_TRIAGE_SLACK_WEBHOOK required", file=sys.stderr)
             return 1
 
     source_enum, parser = _SOURCE_MAP[args.source]
@@ -146,15 +164,22 @@ def cmd_analyze(args: argparse.Namespace) -> int:
     duration_ms = (time.monotonic() - t0) * 1000
 
     # Flaky test tracking
-    tracker = FlakyTestTracker(args.db)
-    test_names = [s.test_name for s in result.failure_sites if s.test_name]
+    test_names = list(dict.fromkeys(s.test_name for s in result.failure_sites if s.test_name))
     flaky_scores: dict[str, float] = {}
 
     if test_names:
-        flaky_scores = tracker.scores(test_names)
-        if not args.no_track:
-            for name in test_names:
-                tracker.record(name, args.build_id, source_enum.value)
+        try:
+            tracker = FlakyTestTracker(args.db)
+            flaky_scores = tracker.scores(test_names)
+            if not args.no_track:
+                for name in test_names:
+                    tracker.record(name, args.build_id, source_enum.value)
+        except (OSError, sqlite3.Error) as exc:
+            print(
+                f"ci-triage: flaky tracker unavailable at {args.db} ({exc}); "
+                "continuing without it. Use --no-track to silence this.",
+                file=sys.stderr,
+            )
 
     report = TriageReport(
         build_id=args.build_id,
@@ -170,12 +195,11 @@ def cmd_analyze(args: argparse.Namespace) -> int:
     if args.output == "json":
         JsonReporter().report(report)
     elif args.output == "slack":
-        url = args.slack_webhook or os.environ.get("CI_TRIAGE_SLACK_WEBHOOK")
-        if not url:
-            print("ci-triage: --slack-webhook or CI_TRIAGE_SLACK_WEBHOOK required", file=sys.stderr)
-            return 1
-        SlackReporter(url).report(report)
         TerminalReporter().report(report)
+        try:
+            SlackReporter(slack_url).report(report)
+        except (OSError, RuntimeError, ValueError) as exc:
+            print(f"ci-triage: could not post to Slack: {exc}", file=sys.stderr)
     else:
         TerminalReporter().report(report)
 
