@@ -114,3 +114,20 @@ class TestFlakyCommand:
         args = parser.parse_args(["flaky", "--db", str(tmp_path / "flaky.db")])
         cmd_flaky(args)
         assert "quarantine candidate" in capsys.readouterr().out
+
+
+class TestInputHandling:
+    def test_unreadable_path_is_a_clean_error(self, tmp_path, capsys):
+        # A directory used to raise IsADirectoryError with a traceback.
+        assert _run(tmp_path, str(tmp_path), "jenkins") == 1
+        assert "cannot read" in capsys.readouterr().err
+
+    def test_slack_without_webhook_fails_before_tracking(self, tmp_path, monkeypatch, capsys):
+        monkeypatch.delenv("CI_TRIAGE_SLACK_WEBHOOK", raising=False)
+        db = tmp_path / "flaky.db"
+        args = build_parser().parse_args(
+            ["analyze", str(FIXTURES / "jenkins_failure.log"), "--source", "jenkins",
+             "--output", "slack", "--db", str(db)]
+        )
+        assert cmd_analyze(args) == 1
+        assert not db.exists()
