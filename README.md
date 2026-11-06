@@ -273,9 +273,9 @@ make demo        # run all three fixtures end-to-end
 
 ---
 
-## JD Coverage
+## What this covers
 
-| Apple JD Requirement | How This Demonstrates It |
+| Capability | Where it lives |
 |---|---|
 | Triage build and test issues affecting CI | Core function: parses Jenkins/GHA/xcodebuild, classifies failure, extracts file:line sites |
 | Develop failure analysis systems leveraging AI | `LLMClassifier`: Claude API with prompt caching; rule-first, LLM-fallback architecture |
