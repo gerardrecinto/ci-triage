@@ -18,6 +18,11 @@ _BUILD_RESULT = re.compile(r"\*\* (BUILD|TEST) (SUCCEEDED|FAILED) \*\*")
 _LINKER_ERROR = re.compile(r"ld: (.+)")
 # Code sign failures
 _CODESIGN_ERROR = re.compile(r"CodeSign (.+) failed")
+# Lines that are errors even without a file:line prefix
+_ERROR_HINT = re.compile(
+    r"^(ld:|clang: error:|fatal error:|Undefined symbols)|Test Case '.+?' failed|^(xcodebuild: )?error:",
+    re.IGNORECASE,
+)
 # Generic xcodebuild error marker
 _XC_ERROR = re.compile(r"^error:\s+(.+)$", re.IGNORECASE)
 
@@ -38,7 +43,7 @@ class XcodebuildParser:
                 level = "ERROR" if "FAILED" in line else "INFO"
             elif _XC_ERROR.match(line):
                 level = "ERROR"
-            elif _CODESIGN_ERROR.search(line):
+            elif _CODESIGN_ERROR.search(line) or _ERROR_HINT.search(message):
                 level = "ERROR"
             entries.append(LogEntry(
                 line_number=i,
