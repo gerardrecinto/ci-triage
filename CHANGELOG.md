@@ -2,6 +2,16 @@
 
 Newest first. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- xcodebuild linker errors (`ld:`, `Undefined symbols`) and failed `Test Case` lines were dropped from the failure context, so those logs came back as unknown.
+- Numbers like 15032 or 1503s matched the 503 gateway rule and turned healthy logs into infra failures. Gateway codes now match as whole numbers.
+- `Could not resolve host` was reported as a container image pull failure because of the bare word `registry`.
+
+### Added
+- Rules for code signing and provisioning profile errors, missing Swift modules and npm or pip packages (ERESOLVE, no matching distribution), DNS failures and failed Docker build steps.
+
 ## [1.3.0] - 2026-11-06
 
 ### Added

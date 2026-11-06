@@ -88,3 +88,50 @@ class TestRuleBasedClassifier:
         result = self.clf.classify(entries)
         assert result.suggested_fix is not None
         assert len(result.suggested_fix) > 0
+
+
+def _classify(parser, text: str):
+    entries = parser.parse(text)
+    return RuleBasedClassifier().classify(parser.extract_failure_context(entries))
+
+
+class TestRealWorldErrors:
+    def test_xcodebuild_linker_error_without_file_prefix(self):
+        log = "ld: symbol(s) not found for architecture arm64\nclang: error: linker command failed with exit code 1\n** BUILD FAILED **\n"
+        assert _classify(XcodebuildParser(), log).category == FailureCategory.COMPILATION_ERROR
+
+    def test_xcodebuild_failed_test_case_line(self):
+        log = "Test Case '-[AppTests.LoginTests testLogin]' failed (0.123 seconds).\n** TEST FAILED **\n"
+        assert _classify(XcodebuildParser(), log).category == FailureCategory.TEST_FAILURE
+
+    def test_missing_provisioning_profile_is_not_unknown(self):
+        log = "error: No profiles for 'com.acme.app' were found\n** BUILD FAILED **\n"
+        result = _classify(XcodebuildParser(), log)
+        assert result.category == FailureCategory.INFRA_FAILURE
+        assert "signing" in result.summary.lower()
+
+    def test_missing_swift_module(self):
+        log = "/Users/r/A.swift:12:8: error: no such module 'Alamofire'\n** BUILD FAILED **\n"
+        assert _classify(XcodebuildParser(), log).category == FailureCategory.DEPENDENCY_FAILURE
+
+    def test_npm_eresolve(self):
+        log = "npm ERR! code ERESOLVE\nnpm ERR! ERESOLVE unable to resolve dependency tree\n"
+        assert _classify(JenkinsParser(), log).category == FailureCategory.DEPENDENCY_FAILURE
+
+    def test_pip_no_matching_distribution(self):
+        log = "ERROR: No matching distribution found for foo\n"
+        assert _classify(JenkinsParser(), log).category == FailureCategory.DEPENDENCY_FAILURE
+
+    def test_dns_failure_is_not_an_image_pull(self):
+        log = "curl: (6) Could not resolve host: registry.example.com\n"
+        result = _classify(JenkinsParser(), log)
+        assert result.category == FailureCategory.INFRA_FAILURE
+        assert "image pull" not in result.summary.lower()
+
+    def test_numbers_containing_503_do_not_match_gateway_errors(self):
+        log = "Compiled 15032 files in 1503s\nERROR: step failed\n"
+        assert _classify(JenkinsParser(), log).category == FailureCategory.UNKNOWN
+
+    def test_real_503_still_matches(self):
+        log = "ERROR: server returned HTTP 503 Service Unavailable\n"
+        assert _classify(JenkinsParser(), log).category == FailureCategory.INFRA_FAILURE

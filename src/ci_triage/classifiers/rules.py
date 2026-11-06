@@ -33,6 +33,34 @@ _RULES: list[_Rule] = [
         "Permission or authentication failure in CI pipeline",
         "Check user/agent credentials, file permissions, SSH keys, or access tokens. Configure ANTHROPIC_API_KEY (Claude Code API key) and re-run with --llm for AI root cause analysis.",
     ),
+    # DNS and network
+    _Rule(
+        re.compile(r"(Could not resolve host|Temporary failure in name resolution|Name or service not known|getaddrinfo (ENOTFOUND|EAI_AGAIN)|ENOTFOUND)", re.I),
+        FailureCategory.INFRA_FAILURE, 0.90,
+        "DNS or network failure: host could not be resolved",
+        "Check DNS and proxy settings on the agent and that the hostname is spelled correctly. This is usually the agent's network, not the code.",
+    ),
+    # Code signing and provisioning
+    _Rule(
+        re.compile(r"(No profiles for .+ were found|provisioning profile|Code Signing Error|No signing certificate|errSecInternalComponent)", re.I),
+        FailureCategory.INFRA_FAILURE, 0.90,
+        "Code signing or provisioning profile problem",
+        "Check the signing certificate is in the agent keychain and unlocked, and that a profile for this bundle ID is installed or Automatic signing is allowed.",
+    ),
+    # Missing modules and packages
+    _Rule(
+        re.compile(r"(no such module '[^']+'|Cannot find module|ERESOLVE|npm ERR! code E404|No matching distribution found|Could not find a version that satisfies)", re.I),
+        FailureCategory.DEPENDENCY_FAILURE, 0.88,
+        "Missing or unresolvable package or module",
+        "Check the package name and version constraints, that the package manager can reach its index, and that dependencies were resolved before building.",
+    ),
+    # Docker build step failure
+    _Rule(
+        re.compile(r"(did not complete successfully: exit code|failed to solve)", re.I),
+        FailureCategory.INFRA_FAILURE, 0.80,
+        "Docker build step failed",
+        "Read the failing RUN step above this line. The command exit code and its output are the real error.",
+    ),
     # Compilation errors
     _Rule(
         re.compile(r"error: .*(cannot find|unresolved identifier|type .* has no member|undeclared identifier)", re.I),
@@ -73,7 +101,7 @@ _RULES: list[_Rule] = [
     ),
     _Rule(
         re.compile(r"Test Case '.+?' failed \([0-9.]+ seconds\)"),
-        FailureCategory.TEST_FAILURE, 0.93,
+        FailureCategory.TEST_FAILURE, 0.88,
         "XCTest case failed",
         "Run the test in Xcode with the same scheme and check the XCResult bundle for stack trace.",
     ),
@@ -123,13 +151,13 @@ _RULES: list[_Rule] = [
     ),
     # Infrastructure failures
     _Rule(
-        re.compile(r"(connection refused|ECONNREFUSED|504|502|503|gateway timeout)", re.I),
+        re.compile(r"(connection refused|ECONNREFUSED|\b(?:502|503|504)\b|gateway timeout)", re.I),
         FailureCategory.INFRA_FAILURE, 0.82,
         "Network/gateway failure: upstream dependency unreachable",
         "Check if the target service is healthy. This is likely an infrastructure issue, not a code bug.",
     ),
     _Rule(
-        re.compile(r"(docker pull|registry|image not found|manifest unknown)", re.I),
+        re.compile(r"(docker pull|pull access denied|image not found|manifest unknown)", re.I),
         FailureCategory.INFRA_FAILURE, 0.85,
         "Container image pull failure",
         "Verify the image tag exists in the registry and the agent has pull credentials.",
