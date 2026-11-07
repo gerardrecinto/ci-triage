@@ -12,7 +12,7 @@ _PYTEST_FAIL = re.compile(r"^FAILED\s+(.+?)\s*(?:- (.+))?$")
 _PYTEST_ERR = re.compile(r"^ERROR\s+(.+)")
 _NPM_ERR = re.compile(r"^npm ERR!\s+(.+)")
 _GHA_ERROR_FILE = re.compile(
-    r"^::error file=(.+?),line=(\d+)(?:,col=(\d+))?::(.+)$"
+    r"^::error file=(.+?),line=(\d+)(?:,col=(\d+))?(?:,[^:]*)?::(.*)$"
 )
 _STEP_FAILED = re.compile(r"^Process completed with exit code (\d+)")
 
@@ -57,12 +57,15 @@ class GitHubActionsParser:
     def extract_failure_sites(self, entries: list[LogEntry]) -> list[FailureSite]:
         sites: list[FailureSite] = []
         for entry in entries:
-            m = _GHA_ERROR_FILE.match(entry.message)
+            m = _GHA_ERROR_FILE.match(entry.raw.strip())
             if m:
+                message = m.group(4)
+                for encoded, decoded in (("%25", "%"), ("%0D", "\r"), ("%0A", "\n"), ("%3A", ":")):
+                    message = re.sub(encoded, decoded, message, flags=re.IGNORECASE)
                 sites.append(FailureSite(
                     file=m.group(1), line=int(m.group(2)),
                     column=int(m.group(3)) if m.group(3) else None,
-                    test_name=None, error_message=m.group(4),
+                    test_name=None, error_message=message,
                 ))
                 continue
             m = _PYTEST_FAIL.match(entry.message)

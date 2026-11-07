@@ -135,3 +135,13 @@ class TestGitHubActionsParserStepFailure:
         entries = self.parser.parse(log)
         sites = self.parser.extract_failure_sites(entries)
         assert any("exited with code 1" in s.error_message for s in sites)
+
+    def test_extracts_file_annotation_with_properties_and_encoded_message(self):
+        log = "::error file=src/app.py,line=12,col=4,title=Lint%3Acheck::bad%3Aexpected%3Avalue"
+        entries = self.parser.parse(log)
+        sites = self.parser.extract_failure_sites(entries)
+        assert len(sites) == 1
+        assert sites[0].file == "src/app.py"
+        assert sites[0].line == 12
+        assert sites[0].column == 4
+        assert sites[0].error_message == "bad:expected:value"
